@@ -16,7 +16,6 @@
  * - Interpolate missing values using linear interpolation.
  * - Compute corrected positions based on calibration errors.
  * - Provide a formatted summary of the calibration map.
- * - Exception handling for invalid input or out-of-range queries.
  *
  * Usage Example:
  * @code
@@ -35,60 +34,68 @@
 #include <stdexcept>
 #include <sstream>
 
+ /**
+  * @class CCalibrationMap
+  * @brief Manages a calibration map for correcting nominal values.
+  *
+  * This class stores calibration data, allowing for error correction
+  * and interpolation. It supports adding data points, retrieving errors,
+  * and computing corrected positions.
+  */
 class CCalibrationMap
 {
 public:
-  /// <summary>
-  /// Adds a value set to the error map
-  /// </summary>
-  /// <param name="Nominal">The nominal value</param>
-  /// <param name="Calibrated">The corresponding calibrated value</param>
-  void AddPoint(double Nominal, double Calibrated) 
+  /**
+   * @brief Adds a single calibration point.
+   * @param Nominal The nominal value.
+   * @param Calibrated The corresponding calibrated value.
+   */
+  void AddPoint(double Nominal, double Calibrated)
   {
     m_CalibratedMap[Nominal] = Nominal - Calibrated;
   }
 
-  /// <summary>
-  /// Adds a range of points to the calibrated map
-  /// </summary>
-  /// <param name="Nominals">Vector of nominal values</param>
-  /// <param name="Calibrated">Vector of the corresponding calibrate values</param>
-  /// <exception cref="std::invalid_argument">Thrown when the vector counrs are not equal. The nominals and calibrated vector sizes must be equal and sequentially corresponding</exception>
+  /**
+   * @brief Adds multiple calibration points.
+   * @param Nominals Vector of nominal values.
+   * @param Calibrated Vector of corresponding calibrated values.
+   * @throws std::invalid_argument if the vector sizes do not match.
+   */
   void AddPoints(std::vector<double>& Nominals, std::vector<double>& Calibrated)
   {
     if (Nominals.size() != Calibrated.size())
       throw std::invalid_argument("Nominals and Calibrated vectors must have the same size.");
-    
+
     for (size_t i = 0; i < Nominals.size(); ++i)
       AddPoint(Nominals[i], Calibrated[i]);
   }
 
-  /// <summary>
-  /// Sets the map passed in, to the internal calibration map
-  /// </summary>
-  /// <param name="Map"></param>
+  /**
+   * @brief Sets the calibration map.
+   * @param Map A map of nominal values and their error values.
+   */
   void SetMap(std::map<double, double> Map)
   {
     m_CalibratedMap = Map;
   }
 
-  /// <summary>
-  /// Appends the internal calibration with the map passed in
-  /// </summary>
-  /// <param name="Map"></param>
+  /**
+   * @brief Appends additional calibration data to the existing map.
+   * @param Map A map of nominal values and their error values.
+   */
   void AppendMap(std::map<double, double>& Map)
   {
     m_CalibratedMap.insert(Map.begin(), Map.end());
   }
 
-  /// <summary>
-  /// Returns the calculated error value for the position passed in
-  /// </summary>
-  /// <param name="Nominal">The nominal value </param>
-  /// <returns>The error value for the nominal value passed in, taken from the error map</returns>
-  /// <exception cref="std::runtime_error">Thrown when this function is called but the calibration map is empty</exception>
-  /// <exception cref="std::out_of_range">Thrown when the nominal value is outside of the range of the calibration map</exception>
-  double ErrorValue(double Nominal) 
+  /**
+   * @brief Retrieves the error value for a given nominal input.
+   * @param Nominal The nominal value.
+   * @return The error value from the calibration map.
+   * @throws std::runtime_error if the map is empty.
+   * @throws std::out_of_range if the nominal value is outside the map range.
+   */
+  double ErrorValue(double Nominal)
   {
     if (m_CalibratedMap.empty())
       throw std::runtime_error("Calibration map is empty.");
@@ -106,40 +113,47 @@ public:
     return Interpolate(Nominal, lower->first, lower->second, upper->first, upper->second);
   }
 
-  /// <summary>
-  /// Returns the corrected position for the nominal value passed in
-  /// </summary>
-  /// <param name="Nominal">The nominal value to be corrected against the error map</param>
-  /// <returns>The corrected position taken from the error map</returns>
-  /// <exception cref="std::runtime_error">Thrown when this function is called but the calibration map is empty</exception>
-  /// <exception cref="std::out_of_range">Thrown when the nominal value is outside of the range of the calibration map</exception>
+  /**
+   * @brief Computes the corrected position for a nominal value.
+   * @param Nominal The nominal value to be corrected.
+   * @return The corrected position.
+   * @throws std::runtime_error if the map is empty.
+   * @throws std::out_of_range if the nominal value is outside the map range.
+   */
   double CorrectedPosition(double Nominal)
   {
     return Nominal - ErrorValue(Nominal);
   }
 
-  /// <summary>
-  /// Returns a summary of the calibration map
-  /// </summary>
-  /// <returns>A string in a string-tabbed format of the calibration map including errors and corrected values</returns>
+  /**
+   * @brief Returns a summary of the calibration map.
+   * @return A formatted string containing the nominal, calibrated, error, and corrected values.
+   */
   std::string GetMapSummary()
   {
     std::ostringstream summary;
     summary << "Nominal\tCalibrated\tError\tCorrected\n";
-    for (auto it = m_CalibratedMap.begin(); it != m_CalibratedMap.end(); ++it) 
-      summary << it->first << "\t" << it-> first - ErrorValue(it->first) << "\t\t" << ErrorValue(it->first) << "\t" << CorrectedPosition(it->first) << "\n";
+    for (auto it = m_CalibratedMap.begin(); it != m_CalibratedMap.end(); ++it)
+      summary << it->first << "\t" << it->first - ErrorValue(it->first) << "\t\t"
+      << ErrorValue(it->first) << "\t" << CorrectedPosition(it->first) << "\n";
     return summary.str();
   }
 
 private:
-  /// <summary>
-  /// The map to hold the error values
-  /// </summary>
+  /**
+   * @brief Holds the calibration error values.
+   */
   std::map<double, double> m_CalibratedMap;
 
-  /// <summary>
-  /// Interpolation helper function
-  /// </summary>
+  /**
+   * @brief Performs linear interpolation between two points.
+   * @param x The x-value to interpolate.
+   * @param x1 The first known x-value.
+   * @param y1 The first known y-value.
+   * @param x2 The second known x-value.
+   * @param y2 The second known y-value.
+   * @return The interpolated y-value.
+   */
   double Interpolate(double x, double x1, double y1, double x2, double y2)
   {
     return y1 + (x - x1) * (y2 - y1) / (x2 - x1);
