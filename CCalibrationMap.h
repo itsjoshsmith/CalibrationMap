@@ -17,15 +17,6 @@
  * - Compute corrected positions based on calibration errors.
  * - Provide a formatted summary of the calibration map.
  *
- * Usage Example:
- * @code
- * CCalibrationMap calibMap;
- * calibMap.AddPoint(10.0, 9.8);
- * calibMap.AddPoint(20.0, 19.5);
- * double corrected = calibMap.CorrectedPosition(15.0);
- * std::cout << "Corrected Position: " << corrected << std::endl;
- * @endcode
- *
  */
 
 #pragma once
@@ -114,13 +105,13 @@ public:
   }
 
   /**
-   * @brief Computes the corrected position for a nominal value.
+   * @brief Computes the corrected point for a nominal value.
    * @param Nominal The nominal value to be corrected.
-   * @return The corrected position.
+   * @return The corrected point.
    * @throws std::runtime_error if the map is empty.
    * @throws std::out_of_range if the nominal value is outside the map range.
    */
-  double CorrectedPosition(double Nominal)
+  double CorrectedPoint(double Nominal)
   {
     return Nominal - ErrorValue(Nominal);
   }
@@ -135,7 +126,7 @@ public:
     summary << "Nominal\tCalibrated\tError\tCorrected\n";
     for (auto it = m_CalibratedMap.begin(); it != m_CalibratedMap.end(); ++it)
       summary << it->first << "\t" << it->first - ErrorValue(it->first) << "\t\t"
-      << ErrorValue(it->first) << "\t" << CorrectedPosition(it->first) << "\n";
+      << ErrorValue(it->first) << "\t" << CorrectedPoint(it->first) << "\n";
     return summary.str();
   }
 
