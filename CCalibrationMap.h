@@ -9,14 +9,6 @@
  * @author Josh Smith
  * @date 3/12/2024
  * @version V1.0
- *
- * @details
- * Features:
- * - Store and retrieve calibration data efficiently.
- * - Interpolate missing values using linear interpolation.
- * - Compute corrected positions based on calibration errors.
- * - Provide a formatted summary of the calibration map.
- *
  */
 
 #pragma once
